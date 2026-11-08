@@ -57,7 +57,12 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- 左側：基本資訊與擴充注意事項設定 -->
         <div class="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-          <h2 class="font-bold text-slate-700 text-base border-b pb-2">1. 賽事與集合時間資訊</h2>
+          <div class="flex items-center justify-between border-b pb-2">
+            <h2 class="font-bold text-slate-700 text-base">1. 賽事與集合時間資訊</h2>
+            <button onclick="copyTournamentInfo(this)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium px-2.5 py-1 rounded transition">
+              複製賽事資訊
+            </button>
+          </div>
           
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">比賽名稱</label>
@@ -132,7 +137,7 @@
             <div>
               <div class="flex items-center justify-between mb-1">
                 <label class="block text-xs font-semibold text-slate-600">或直接貼上賽程文字內容</label>
-                <button onclick="copyRawText(this)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium px-2 py-0.5 rounded transition">
+                <button onclick="copyRawText(this)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium px-2.5 py-1 rounded transition">
                   複製賽程文字
                 </button>
               </div>
@@ -189,6 +194,45 @@
 選手P (高女單) : 12:30、14:15、15:00`;
 
     document.getElementById('rawText').value = defaultText;
+
+    // 複製賽事與集合時間資訊功能
+    function copyTournamentInfo(btn) {
+      const tName = document.getElementById('tournamentName').value;
+      const tLoc = document.getElementById('tournamentLocation').value;
+      const d1Date = document.getElementById('day1Date').value;
+      const d2Date = document.getElementById('day2Date').value;
+      const d1Gather = document.getElementById('day1Gather').value;
+      const d1Self = document.getElementById('day1Self').value;
+      const d2Gather = document.getElementById('day2Gather').value;
+      const d2Self = document.getElementById('day2Self').value;
+      const prep = document.getElementById('prepItems').value;
+      const notice = document.getElementById('noticeItems').value;
+
+      let infoText = `比賽名稱：${tName}\n比賽地點：${tLoc}\n`;
+      infoText += `----------------------------------\n`;
+      infoText += `【${d1Date}】\n- 學校集合：${d1Gather}\n- 自行前往：${d1Self}\n\n`;
+      infoText += `【${d2Date}】\n- 學校集合：${d2Gather}\n- 自行前往：${d2Self}`;
+      
+      if (prep.trim()) {
+        infoText += `\n\n【行前準備與攜帶物品】\n${prep}`;
+      }
+      if (notice.trim()) {
+        infoText += `\n\n【行前注意事項】\n${notice}`;
+      }
+
+      navigator.clipboard.writeText(infoText).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = '已複製！';
+        btn.classList.add('bg-green-100', 'text-green-700');
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove('bg-green-100', 'text-green-700');
+        }, 1500);
+      }).catch(err => {
+        alert('複製失敗，請手動複製。');
+        console.error(err);
+      });
+    }
 
     // 複製賽程文字功能
     function copyRawText(btn) {
