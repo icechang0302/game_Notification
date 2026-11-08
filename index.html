@@ -55,7 +55,7 @@
 
       <!-- 輸入分頁控制 -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- 左側：基本資訊設定 -->
+        <!-- 左側：基本資訊與擴充注意事項設定 -->
         <div class="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <h2 class="font-bold text-slate-700 text-base border-b pb-2">1. 賽事與集合時間資訊</h2>
           
@@ -101,6 +101,19 @@
               <input type="text" id="day2Self" value="08:00" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
           </div>
+
+          <!-- 新增擴充項目 4, 5... 設定區 -->
+          <div class="pt-2 border-t space-y-3">
+            <h3 class="font-bold text-slate-700 text-xs uppercase tracking-wider">額外注意事項與準備事項 (有內容才顯示)</h3>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">行前準備與攜帶物品 (支援多行或項目)</label>
+              <textarea id="prepItems" rows="2" placeholder="例如：1. 球拍、水壺、毛巾&#10;2. 學校運動服裝" class="w-full p-2 border rounded border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">行前注意事項</label>
+              <textarea id="noticeItems" rows="2" placeholder="例如：請務必準時集合，逾時不候。" class="w-full p-2 border rounded border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+            </div>
+          </div>
         </div>
 
         <!-- 右側：資料來源 (圖片上傳 / 文本編輯) -->
@@ -140,8 +153,35 @@
   <script>
     // 預設比賽賽程文字內容
     const defaultText = `【2026-11-19】
+低年級
+童翌勳 (低男單) : 12:00、14:30
+謝皓喆 (低男單) : 12:00、13:15
+廖胤期 (低男單) : 12:15、14:30
+吳家丞 (低男單) : 13:15、14:30
+林子晴 (低女單) : 15:15、15:45
+
+中年級
+林祐頡 (中男單) : 08:45、10:00
+謝皓宇 (中男單) : 10:00、11:15
+吳雨恩 (中女單) : 11:45、13:00
+涂萬希 (中女單) : 12:00、13:15、14:15
+
 高年級
-王大明 (高男雙) : 08:45、09:30`;
+張智勛 (高男單) : 08:00、10:30
+謝翔宇 (高男單) : 08:00、09:15
+林靖洋 (高男單) : 09:15、10:30
+曾楷翔 (高男單) : 09:30、10:45
+
+【2026-11-20】
+中年級
+林祐頡 (中男雙) : 09:00、09:30
+謝皓喆 (中男雙) : 09:00、09:30
+
+高年級
+曾楷翔 (高男雙) : 08:45、09:30
+許宸睿 (高男單/高男雙) : 08:45、09:30、11:00、13:45
+黃芊萱 (高女單) : 12:30、15:00
+蔡昀妍 (高女單) : 12:30、14:15、15:00`;
 
     document.getElementById('rawText').value = defaultText;
 
@@ -155,14 +195,12 @@
         line = line.trim();
         if (!line) return;
 
-        // 日期判斷
         const dateMatch = line.match(/【(.*?)】/) || line.match(/(\d{4}-\d{2}-\d{2})/);
         if (dateMatch) {
           currentDate = dateMatch[1];
           return;
         }
 
-        // 學生賽程比對
         const match = line.match(/^([^\s\(\:：]+)\s*\(([^)]+)\)\s*[:：]\s*(.*)$/);
         if (match) {
           const name = match[1].trim();
@@ -222,16 +260,37 @@
       const day2G = document.getElementById('day2Gather').value;
       const day2S = document.getElementById('day2Self').value;
 
+      // 取得動態擴充欄位內容
+      const prepItems = document.getElementById('prepItems').value.trim();
+      const noticeItems = document.getElementById('noticeItems').value.trim();
+
       const container = document.getElementById('outputContainer');
       container.innerHTML = '';
 
       filtered.forEach(student => {
-        // 分離 Day 1 與 Day 2 賽程
         const day1Schedules = student.schedules.filter(s => s.date.includes('11-19') || s.date === day1D);
         const day2Schedules = student.schedules.filter(s => s.date.includes('11-20') || s.date === day2D);
 
         const card = document.createElement('div');
         card.className = 'print-page bg-white p-8 rounded-xl shadow-sm border border-slate-200 text-slate-900 font-sans leading-relaxed';
+
+        // 動態組合 1, 2, 3 項及後續有填寫的 4, 5 項目
+        let dynamicListHtml = `
+          <ol class="list-decimal list-inside space-y-1 font-semibold pl-1 mb-6">
+            <li>比賽日期：${day1D} ~ ${day2D}</li>
+            <li>比賽地點：${tLoc}</li>
+            <li>集合時間</li>
+        `;
+        
+        let itemIndex = 4;
+        if (prepItems) {
+          dynamicListHtml += `<li class="mt-2">行前準備與攜帶物品：<div class="font-normal pl-5 whitespace-pre-line text-sm mt-0.5">${prepItems}</div></li>`;
+          itemIndex++;
+        }
+        if (noticeItems) {
+          dynamicListHtml += `<li class="mt-2">行前注意事項：<div class="font-normal pl-5 whitespace-pre-line text-sm mt-0.5">${noticeItems}</div></li>`;
+        }
+        dynamicListHtml += `</ol>`;
 
         card.innerHTML = `
           <!-- 標題 -->
@@ -240,15 +299,12 @@
           </div>
 
           <!-- 親愛的家長內文與注意事項 -->
-          <div class="text-base font-medium space-y-2 mb-6">
+          <div class="text-base font-medium space-y-2 mb-4">
             <p>親愛的家長您好：</p>
             <p>孩子們將代表學校參加「 <span class="font-bold border-b border-black px-1">${tName}</span> 」，在此通知注意事項：</p>
-            <ol class="list-decimal list-inside space-y-1 font-semibold pl-1">
-              <li>比賽日期：${day1D} ~ ${day2D}</li>
-              <li>比賽地點：${tLoc}</li>
-              <li>集合時間</li>
-            </ol>
           </div>
+
+          ${dynamicListHtml}
 
           <!-- 兩日時間對照表格 -->
           <table class="w-full border-collapse border border-black text-center mb-6 text-sm sm:text-base">
@@ -267,22 +323,22 @@
             <tbody>
               <tr>
                 <!-- Day 1 賽程詳情 -->
-                <td class="border-r border-black p-4 text-left align-top min-h-[160px]">
+                <td class="border-r border-black p-4 text-left align-top min-h-[140px]">
                   ${day1Schedules.length > 0 ? day1Schedules.map(s => `
                     <div class="mb-3">
                       <div class="font-bold text-slate-800">[${s.category}]</div>
                       <div class="text-sm pl-2">賽程時間：${s.times.join('、')}</div>
                     </div>
-                  `).join('') : '<div class="text-gray-400 text-center py-8">今日無賽程安排</div>'}
+                  `).join('') : '<div class="text-gray-400 text-center py-6">今日無賽程安排</div>'}
                 </td>
                 <!-- Day 2 賽程詳情 -->
-                <td class="p-4 text-left align-top min-h-[160px]">
+                <td class="p-4 text-left align-top min-h-[140px]">
                   ${day2Schedules.length > 0 ? day2Schedules.map(s => `
                     <div class="mb-3">
                       <div class="font-bold text-slate-800">[${s.category}]</div>
                       <div class="text-sm pl-2">賽程時間：${s.times.join('、')}</div>
                     </div>
-                  `).join('') : '<div class="text-gray-400 text-center py-8">今日無賽程安排</div>'}
+                  `).join('') : '<div class="text-gray-400 text-center py-6">今日無賽程安排</div>'}
                 </td>
               </tr>
             </tbody>
@@ -311,7 +367,7 @@
               `).join('')}
             </div>
 
-            <div class="mt-8 flex justify-between items-end font-semibold pt-4">
+            <div class="mt-6 flex justify-between items-end font-semibold pt-4">
               <div>請導師惠予公假協助，感謝您的支持！</div>
               <div class="text-sm border-b border-black pb-1 px-4">
                 導師簽章：__________________
@@ -325,7 +381,7 @@
     }
 
     // 監聽所有設定元件變更並重新渲染
-    ['tournamentName', 'tournamentLocation', 'day1Date', 'day2Date', 'day1Gather', 'day1Self', 'day2Gather', 'day2Self', 'rawText', 'studentSelect'].forEach(id => {
+    ['tournamentName', 'tournamentLocation', 'day1Date', 'day2Date', 'day1Gather', 'day1Self', 'day2Gather', 'day2Self', 'prepItems', 'noticeItems', 'rawText', 'studentSelect'].forEach(id => {
       document.getElementById(id).addEventListener('input', render);
       document.getElementById(id).addEventListener('change', render);
     });
