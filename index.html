@@ -102,12 +102,12 @@
             </div>
           </div>
 
-          <!-- 擴充項目設定區 -->
+          <!-- 擴充項目設定區 (會在表格後面顯示 4, 5...) -->
           <div class="pt-2 border-t space-y-3">
-            <h3 class="font-bold text-slate-700 text-xs uppercase tracking-wider">額外注意事項與準備事項 (有內容才顯示)</h3>
+            <h3 class="font-bold text-slate-700 text-xs uppercase tracking-wider">表格後額外注意事項 (有內容才顯示 4, 5...)</h3>
             <div>
               <label class="block text-xs font-semibold text-slate-600 mb-1">行前準備與攜帶物品</label>
-              <textarea id="prepItems" rows="2" placeholder="例如：1. 球拍、水壺、毛巾&#10;2. 學校運動服裝" class="w-full p-2 border rounded border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+              <textarea id="prepItems" rows="2" placeholder="例如：&#10;☐ 出發當天穿新外套+長褲&#10;☐ 比賽用品：球拍、隊服、球褲、球鞋、擦汗毛巾、水壺。" class="w-full p-2 border rounded border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-600 mb-1">行前注意事項</label>
@@ -128,7 +128,7 @@
               <div id="ocrStatus" class="text-xs text-blue-600 font-medium mt-1 hidden">正在解析圖片中，請稍候...</div>
             </div>
 
-            <!-- 文字輸入區 (去識別化範例資料) -->
+            <!-- 文字輸入區 -->
             <div>
               <label class="block text-xs font-semibold text-slate-600 mb-1">或直接貼上賽程文字內容</label>
               <textarea id="rawText" rows="7" class="w-full p-2 border rounded border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
@@ -151,7 +151,7 @@
   <div id="outputContainer" class="max-w-4xl mx-auto space-y-8 px-4 sm:px-0"></div>
 
   <script>
-    // 預設比賽賽程文字內容 (去識別化處理)
+    // 預設比賽賽程文字內容
     const defaultText = `【2026-11-19】
 低年級
 選手A (低男單) : 12:00、14:30
@@ -274,23 +274,16 @@
         const card = document.createElement('div');
         card.className = 'print-page bg-white p-8 rounded-xl shadow-sm border border-slate-200 text-slate-900 font-sans leading-relaxed';
 
-        // 動態組合 1, 2, 3 項及後續有填寫的 4, 5 項目
-        let dynamicListHtml = `
-          <ol class="list-decimal list-inside space-y-1 font-semibold pl-1 mb-6">
-            <li>比賽日期：${day1D} ~ ${day2D}</li>
-            <li>比賽地點：${tLoc}</li>
-            <li>集合時間</li>
-        `;
-        
-        let itemIndex = 4;
+        // 產生 4. 5. 後續欄位 HTML (若有內容)
+        let extraListHtml = '';
+        let nextIndex = 4;
         if (prepItems) {
-          dynamicListHtml += `<li class="mt-2">行前準備與攜帶物品：<div class="font-normal pl-5 whitespace-pre-line text-sm mt-0.5">${prepItems}</div></li>`;
-          itemIndex++;
+          extraListHtml += `<li class="font-bold text-base mt-3" value="${nextIndex}">行前準備與攜帶物品：<div class="font-normal pl-2 whitespace-pre-line text-sm mt-1 leading-relaxed">${prepItems}</div></li>`;
+          nextIndex++;
         }
         if (noticeItems) {
-          dynamicListHtml += `<li class="mt-2">行前注意事項：<div class="font-normal pl-5 whitespace-pre-line text-sm mt-0.5">${noticeItems}</div></li>`;
+          extraListHtml += `<li class="font-bold text-base mt-3" value="${nextIndex}">行前注意事項：<div class="font-normal pl-2 whitespace-pre-line text-sm mt-1 leading-relaxed">${noticeItems}</div></li>`;
         }
-        dynamicListHtml += `</ol>`;
 
         card.innerHTML = `
           <!-- 標題 -->
@@ -299,23 +292,28 @@
           </div>
 
           <!-- 親愛的家長內文與注意事項 -->
-          <div class="text-base font-medium space-y-2 mb-4">
+          <div class="text-base font-medium space-y-2 mb-3">
             <p>親愛的家長您好：</p>
             <p>孩子們將代表學校參加「 <span class="font-bold border-b border-black px-1">${tName}</span> 」，在此通知注意事項：</p>
           </div>
 
-          ${dynamicListHtml}
+          <!-- 條目 1, 2, 3 -->
+          <ol class="list-decimal list-inside font-bold text-base space-y-1 mb-3">
+            <li>比賽日期：<span class="font-normal">${day1D} ~ ${day2D}</span></li>
+            <li>比賽地點：<span class="font-normal">${tLoc}</span></li>
+            <li>集合時間：</li>
+          </ol>
 
-          <!-- 兩日時間對照表格 -->
-          <table class="w-full border-collapse border border-black text-center mb-6 text-sm sm:text-base">
+          <!-- 兩日時間對照表格 (緊接在 3. 集合時間 下方) -->
+          <table class="w-full border-collapse border border-black text-center mb-4 text-sm sm:text-base">
             <thead>
               <tr class="border-b border-black">
                 <th class="w-1/2 border-r border-black p-2 bg-slate-50">
-                  <div>日期: ${day1D}</div>
+                  <div class="font-bold">日期: ${day1D}</div>
                   <div class="font-normal text-xs sm:text-sm mt-1">學校集合：${day1G} | 自行前往：${day1S}</div>
                 </th>
                 <th class="w-1/2 p-2 bg-slate-50">
-                  <div>日期: ${day2D}</div>
+                  <div class="font-bold">日期: ${day2D}</div>
                   <div class="font-normal text-xs sm:text-sm mt-1">學校集合：${day2G} | 自行前往：${day2S}</div>
                 </th>
               </tr>
@@ -323,26 +321,29 @@
             <tbody>
               <tr>
                 <!-- Day 1 賽程詳情 -->
-                <td class="border-r border-black p-4 text-left align-top min-h-[140px]">
+                <td class="border-r border-black p-4 text-left align-top min-h-[120px]">
                   ${day1Schedules.length > 0 ? day1Schedules.map(s => `
                     <div class="mb-3">
                       <div class="font-bold text-slate-800">[${s.category}]</div>
                       <div class="text-sm pl-2">賽程時間：${s.times.join('、')}</div>
                     </div>
-                  `).join('') : '<div class="text-gray-400 text-center py-6">今日無賽程安排</div>'}
+                  `).join('') : '<div class="text-gray-400 text-center py-4">今日無賽程安排</div>'}
                 </td>
                 <!-- Day 2 賽程詳情 -->
-                <td class="p-4 text-left align-top min-h-[140px]">
+                <td class="p-4 text-left align-top min-h-[120px]">
                   ${day2Schedules.length > 0 ? day2Schedules.map(s => `
                     <div class="mb-3">
                       <div class="font-bold text-slate-800">[${s.category}]</div>
                       <div class="text-sm pl-2">賽程時間：${s.times.join('、')}</div>
                     </div>
-                  `).join('') : '<div class="text-gray-400 text-center py-6">今日無賽程安排</div>'}
+                  `).join('') : '<div class="text-gray-400 text-center py-4">今日無賽程安排</div>'}
                 </td>
               </tr>
             </tbody>
           </table>
+
+          <!-- 續接 4, 5 條目 (表格下方) -->
+          ${extraListHtml ? `<ol class="list-decimal list-inside mb-6">${extraListHtml}</ol>` : '<div class="mb-6"></div>'}
 
           <!-- 撕下聯提示與虛線 -->
           <div class="text-center font-medium text-sm text-slate-700 mb-2">
