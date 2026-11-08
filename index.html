@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>賽程自動轉換行前通知單與公假單產生器</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tesseract.js (OCR) CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-page {
+        page-break-after: always;
+        break-after: page;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 15mm;
+      }
+    }
+    .dashed-line {
+      border-bottom: 2px dashed #4b5563;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans pb-12">
+
+  <!-- 頂部控制與設定面板 (列印時隱藏) -->
+  <div class="no-print bg-white shadow-md border-b border-slate-200 mb-8">
+    <div class="max-w-6xl mx-auto p-4 sm:p-6">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-6 border-b pb-4">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-800">賽程轉換通知單與公假單產生器</h1>
+          <p class="text-sm text-slate-500">支援上傳賽程圖片 (OCR) 或直接貼上文字自動解析生成文件</p>
+        </div>
+        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-lg shadow transition flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+          列印 / 輸出 PDF
+        </button>
+      </div>
+
+      <!-- 輸入分頁控制 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- 左側：基本資訊設定 -->
+        <div class="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <h2 class="font-bold text-slate-700 text-base border-b pb-2">1. 賽事與集合時間資訊</h2>
+          
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">比賽名稱</label>
+            <input type="text" id="tournamentName" value="2026第二屆桃園市航空城盃" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">比賽地點</label>
+            <input type="text" id="tournamentLocation" value="桃園市立羽球館" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">首日日期 (Day 1)</label>
+              <input type="text" id="day1Date" value="2026-11-19 (四)" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">次日日期 (Day 2)</label>
+              <input type="text" id="day2Date" value="2026-11-20 (五)" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Day 1 學校集合</label>
+              <input type="text" id="day1Gather" value="07:30" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Day 1 自行前往</label>
+              <input type="text" id="day1Self" value="08:00" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Day 2 學校集合</label>
+              <input type="text" id="day2Gather" value="07:30" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Day 2 自行前往</label>
+              <input type="text" id="day2Self" value="08:00" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- 右側：資料來源 (圖片上傳 / 文本編輯) -->
+        <div class="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
+          <div>
+            <h2 class="font-bold text-slate-700 text-base border-b pb-2 mb-3">2. 賽程資料來源 (圖片 / 文字)</h2>
+
+            <!-- 圖片上傳區 -->
+            <div class="mb-3">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">上傳賽程圖片 (OCR 自動辨識)</label>
+              <input type="file" id="imageInput" accept="image/*" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+              <div id="ocrStatus" class="text-xs text-blue-600 font-medium mt-1 hidden">正在解析圖片中，請稍候...</div>
+            </div>
+
+            <!-- 文字輸入區 -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">或直接貼上賽程文字內容</label>
+              <textarea id="rawText" rows="6" class="w-full p-2 border rounded border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+            </div>
+          </div>
+
+          <!-- 學生過濾挑選區 -->
+          <div class="pt-2 border-t">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">選擇顯示學生</label>
+            <select id="studentSelect" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+              <option value="ALL">-- 顯示全部學生 (預設列印全班) --</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 預覽/列印輸出區 -->
+  <div id="outputContainer" class="max-w-4xl mx-auto space-y-8 px-4 sm:px-0"></div>
+
+  <script>
+    // 預設比賽賽程文字內容
+    const defaultText = `【2026-11-19】
+高年級
+王大明 (高男雙) : 08:45、09:30`;
+
+    document.getElementById('rawText').value = defaultText;
+
+    // 解析文字為學生資料結構
+    function parseSchedule(text) {
+      const lines = text.split('\n');
+      let currentDate = '';
+      const students = {};
+
+      lines.forEach(line => {
+        line = line.trim();
+        if (!line) return;
+
+        // 日期判斷
+        const dateMatch = line.match(/【(.*?)】/) || line.match(/(\d{4}-\d{2}-\d{2})/);
+        if (dateMatch) {
+          currentDate = dateMatch[1];
+          return;
+        }
+
+        // 學生賽程比對
+        const match = line.match(/^([^\s\(\:：]+)\s*\(([^)]+)\)\s*[:：]\s*(.*)$/);
+        if (match) {
+          const name = match[1].trim();
+          const category = match[2].trim();
+          const timesStr = match[3].trim();
+          const times = timesStr.split(/[、,]/).map(t => t.trim());
+
+          if (!students[name]) {
+            students[name] = { name, schedules: [] };
+          }
+
+          students[name].schedules.push({
+            date: currentDate || '未指定日期',
+            category: category,
+            times: times
+          });
+        }
+      });
+
+      return Object.values(students);
+    }
+
+    // 更新學生下拉選單選項
+    function updateStudentSelect(students) {
+      const select = document.getElementById('studentSelect');
+      const currentVal = select.value;
+      select.innerHTML = '<option value="ALL">-- 顯示全部學生 (預設列印全班) --</option>';
+      
+      students.forEach(st => {
+        const opt = document.createElement('option');
+        opt.value = st.name;
+        opt.textContent = st.name;
+        select.appendChild(opt);
+      });
+
+      if (students.some(s => s.name === currentVal)) {
+        select.value = currentVal;
+      }
+    }
+
+    // 渲染通知單與公假單列表
+    function render() {
+      const text = document.getElementById('rawText').value;
+      const students = parseSchedule(text);
+      updateStudentSelect(students);
+
+      const selectedName = document.getElementById('studentSelect').value;
+      const filtered = selectedName === 'ALL' ? students : students.filter(s => s.name === selectedName);
+
+      const tName = document.getElementById('tournamentName').value || '填比賽名稱';
+      const tLoc = document.getElementById('tournamentLocation').value || '填比賽地點';
+      const day1D = document.getElementById('day1Date').value;
+      const day2D = document.getElementById('day2Date').value;
+
+      const day1G = document.getElementById('day1Gather').value;
+      const day1S = document.getElementById('day1Self').value;
+      const day2G = document.getElementById('day2Gather').value;
+      const day2S = document.getElementById('day2Self').value;
+
+      const container = document.getElementById('outputContainer');
+      container.innerHTML = '';
+
+      filtered.forEach(student => {
+        // 分離 Day 1 與 Day 2 賽程
+        const day1Schedules = student.schedules.filter(s => s.date.includes('11-19') || s.date === day1D);
+        const day2Schedules = student.schedules.filter(s => s.date.includes('11-20') || s.date === day2D);
+
+        const card = document.createElement('div');
+        card.className = 'print-page bg-white p-8 rounded-xl shadow-sm border border-slate-200 text-slate-900 font-sans leading-relaxed';
+
+        card.innerHTML = `
+          <!-- 標題 -->
+          <div class="text-center font-bold text-2xl tracking-wide mb-6">
+            「 ${tName} 」 行前通知單
+          </div>
+
+          <!-- 親愛的家長內文與注意事項 -->
+          <div class="text-base font-medium space-y-2 mb-6">
+            <p>親愛的家長您好：</p>
+            <p>孩子們將代表學校參加「 <span class="font-bold border-b border-black px-1">${tName}</span> 」，在此通知注意事項：</p>
+            <ol class="list-decimal list-inside space-y-1 font-semibold pl-1">
+              <li>比賽日期：${day1D} ~ ${day2D}</li>
+              <li>比賽地點：${tLoc}</li>
+              <li>集合時間</li>
+            </ol>
+          </div>
+
+          <!-- 兩日時間對照表格 -->
+          <table class="w-full border-collapse border border-black text-center mb-6 text-sm sm:text-base">
+            <thead>
+              <tr class="border-b border-black">
+                <th class="w-1/2 border-r border-black p-2 bg-slate-50">
+                  <div>日期: ${day1D}</div>
+                  <div class="font-normal text-xs sm:text-sm mt-1">學校集合：${day1G} | 自行前往：${day1S}</div>
+                </th>
+                <th class="w-1/2 p-2 bg-slate-50">
+                  <div>日期: ${day2D}</div>
+                  <div class="font-normal text-xs sm:text-sm mt-1">學校集合：${day2G} | 自行前往：${day2S}</div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <!-- Day 1 賽程詳情 -->
+                <td class="border-r border-black p-4 text-left align-top min-h-[160px]">
+                  ${day1Schedules.length > 0 ? day1Schedules.map(s => `
+                    <div class="mb-3">
+                      <div class="font-bold text-slate-800">[${s.category}]</div>
+                      <div class="text-sm pl-2">賽程時間：${s.times.join('、')}</div>
+                    </div>
+                  `).join('') : '<div class="text-gray-400 text-center py-8">今日無賽程安排</div>'}
+                </td>
+                <!-- Day 2 賽程詳情 -->
+                <td class="p-4 text-left align-top min-h-[160px]">
+                  ${day2Schedules.length > 0 ? day2Schedules.map(s => `
+                    <div class="mb-3">
+                      <div class="font-bold text-slate-800">[${s.category}]</div>
+                      <div class="text-sm pl-2">賽程時間：${s.times.join('、')}</div>
+                    </div>
+                  `).join('') : '<div class="text-gray-400 text-center py-8">今日無賽程安排</div>'}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- 撕下聯提示與虛線 -->
+          <div class="text-center font-medium text-sm text-slate-700 mb-2">
+            麻煩家長確認孩子參賽時間（勾選），沿虛線撕下此聯交給導師
+          </div>
+          <div class="dashed-line my-4"></div>
+
+          <!-- 公假單回條區塊 -->
+          <div class="pt-2 text-base">
+            <div class="font-bold mb-3 flex items-center">
+              <span class="border-b-2 border-black text-lg px-2 mr-1">${student.name}</span> 
+              因代表學校參加「 ${tName} 」，需請公假外出參賽
+            </div>
+            <div class="font-semibold mb-2">時間如下：</div>
+
+            <div class="space-y-2 pl-4 text-sm sm:text-base">
+              ${student.schedules.map(s => `
+                <div class="flex items-start gap-2">
+                  <input type="checkbox" checked class="mt-1 h-4 w-4 rounded border-gray-400">
+                  <span>${s.date} ${s.category} (${s.times.join('、')})</span>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="mt-8 flex justify-between items-end font-semibold pt-4">
+              <div>請導師惠予公假協助，感謝您的支持！</div>
+              <div class="text-sm border-b border-black pb-1 px-4">
+                導師簽章：__________________
+              </div>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    // 監聽所有設定元件變更並重新渲染
+    ['tournamentName', 'tournamentLocation', 'day1Date', 'day2Date', 'day1Gather', 'day1Self', 'day2Gather', 'day2Self', 'rawText', 'studentSelect'].forEach(id => {
+      document.getElementById(id).addEventListener('input', render);
+      document.getElementById(id).addEventListener('change', render);
+    });
+
+    // 處理圖片上傳 (OCR)
+    document.getElementById('imageInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('ocrStatus');
+      statusEl.classList.remove('hidden');
+      statusEl.textContent = '正在利用 OCR 解析圖片中的文字，請稍候...';
+
+      try {
+        const worker = await Tesseract.createWorker('chi_tra');
+        const ret = await worker.recognize(file);
+        await worker.terminate();
+
+        statusEl.classList.add('hidden');
+        if (ret.data.text) {
+          document.getElementById('rawText').value = ret.data.text;
+          render();
+        }
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = '圖片解析失敗，請重新嘗試或手動貼上文字。';
+      }
+    });
+
+    // 初始化首次渲染
+    render();
+  </script>
+</body>
+</html>
