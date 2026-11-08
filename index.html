@@ -102,11 +102,11 @@
             </div>
           </div>
 
-          <!-- 新增擴充項目 4, 5... 設定區 -->
+          <!-- 擴充項目設定區 -->
           <div class="pt-2 border-t space-y-3">
             <h3 class="font-bold text-slate-700 text-xs uppercase tracking-wider">額外注意事項與準備事項 (有內容才顯示)</h3>
             <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">行前準備與攜帶物品 (支援多行或項目)</label>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">行前準備與攜帶物品</label>
               <textarea id="prepItems" rows="2" placeholder="例如：1. 球拍、水壺、毛巾&#10;2. 學校運動服裝" class="w-full p-2 border rounded border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
             </div>
             <div>
@@ -128,10 +128,10 @@
               <div id="ocrStatus" class="text-xs text-blue-600 font-medium mt-1 hidden">正在解析圖片中，請稍候...</div>
             </div>
 
-            <!-- 文字輸入區 -->
+            <!-- 文字輸入區 (去識別化範例資料) -->
             <div>
               <label class="block text-xs font-semibold text-slate-600 mb-1">或直接貼上賽程文字內容</label>
-              <textarea id="rawText" rows="6" class="w-full p-2 border rounded border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+              <textarea id="rawText" rows="7" class="w-full p-2 border rounded border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
             </div>
           </div>
 
@@ -151,37 +151,37 @@
   <div id="outputContainer" class="max-w-4xl mx-auto space-y-8 px-4 sm:px-0"></div>
 
   <script>
-    // 預設比賽賽程文字內容
+    // 預設比賽賽程文字內容 (去識別化處理)
     const defaultText = `【2026-11-19】
 低年級
-童翌勳 (低男單) : 12:00、14:30
-謝皓喆 (低男單) : 12:00、13:15
-廖胤期 (低男單) : 12:15、14:30
-吳家丞 (低男單) : 13:15、14:30
-林子晴 (低女單) : 15:15、15:45
+選手A (低男單) : 12:00、14:30
+選手B (低男單) : 12:00、13:15
+選手C (低男單) : 12:15、14:30
+選手D (低男單) : 13:15、14:30
+選手E (低女單) : 15:15、15:45
 
 中年級
-林祐頡 (中男單) : 08:45、10:00
-謝皓宇 (中男單) : 10:00、11:15
-吳雨恩 (中女單) : 11:45、13:00
-涂萬希 (中女單) : 12:00、13:15、14:15
+選手F (中男單) : 08:45、10:00
+選手G (中男單) : 10:00、11:15
+選手H (中女單) : 11:45、13:00
+選手I (中女單) : 12:00、13:15、14:15
 
 高年級
-張智勛 (高男單) : 08:00、10:30
-謝翔宇 (高男單) : 08:00、09:15
-林靖洋 (高男單) : 09:15、10:30
-曾楷翔 (高男單) : 09:30、10:45
+選手J (高男單) : 08:00、10:30
+選手K (高男單) : 08:00、09:15
+選手L (高男單) : 09:15、10:30
+選手M (高男單) : 09:30、10:45
 
 【2026-11-20】
 中年級
-林祐頡 (中男雙) : 09:00、09:30
-謝皓喆 (中男雙) : 09:00、09:30
+選手F (中男雙) : 09:00、09:30
+選手B (中男雙) : 09:00、09:30
 
 高年級
-曾楷翔 (高男雙) : 08:45、09:30
-許宸睿 (高男單/高男雙) : 08:45、09:30、11:00、13:45
-黃芊萱 (高女單) : 12:30、15:00
-蔡昀妍 (高女單) : 12:30、14:15、15:00`;
+選手M (高男雙) : 08:45、09:30
+選手N (高男單/高男雙) : 08:45、09:30、11:00、13:45
+選手O (高女單) : 12:30、15:00
+選手P (高女單) : 12:30、14:15、15:00`;
 
     document.getElementById('rawText').value = defaultText;
 
