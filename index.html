@@ -432,27 +432,21 @@
         const card = document.createElement('div');
         card.className = 'print-page bg-white p-8 rounded-xl shadow-sm border border-slate-200 text-slate-900 font-sans leading-relaxed';
 
-        // 產生 4. 5. 後續欄位 HTML (標題維持黑色且字級與 1.2.3. 一致，僅內文調整大小與顏色)
+        // 產生 4. 5. 後續欄位 HTML (標題維持黑色且字級與 1.2.3. 一致，僅內文調整大小與顏色，緊接下一行不空行)
         let extraListHtml = '';
         let nextIndex = 4;
         if (prepItems) {
-          extraListHtml += `
-            <li class="font-bold text-base mt-3 text-slate-900" value="${nextIndex}">
-              <span>行前準備與攜帶物品：</span>
-              <div class="font-normal pl-2 whitespace-pre-line mt-1 leading-relaxed" style="font-size: ${prepFontSize}; color: ${prepColor} !important;">
-                ${prepItems}
-              </div>
-            </li>`;
+          extraListHtml += `<li class="font-bold text-base mt-2.5 text-slate-900" value="${nextIndex}">` +
+            `<span>行前準備與攜帶物品：</span>` +
+            `<div class="font-normal pl-4 whitespace-pre-line leading-relaxed" style="font-size: ${prepFontSize}; color: ${prepColor} !important;">${prepItems}</div>` +
+            `</li>`;
           nextIndex++;
         }
         if (noticeItems) {
-          extraListHtml += `
-            <li class="font-bold text-base mt-3 text-slate-900" value="${nextIndex}">
-              <span>行前注意事項：</span>
-              <div class="font-normal pl-2 whitespace-pre-line mt-1 leading-relaxed" style="font-size: ${noticeFontSize}; color: ${noticeColor} !important;">
-                ${noticeItems}
-              </div>
-            </li>`;
+          extraListHtml += `<li class="font-bold text-base mt-2.5 text-slate-900" value="${nextIndex}">` +
+            `<span>行前注意事項：</span>` +
+            `<div class="font-normal pl-4 whitespace-pre-line leading-relaxed" style="font-size: ${noticeFontSize}; color: ${noticeColor} !important;">${noticeItems}</div>` +
+            `</li>`;
         }
 
         card.innerHTML = `
