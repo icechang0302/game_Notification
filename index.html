@@ -9,10 +9,14 @@
   <!-- Tesseract.js (OCR) CDN -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
     @media print {
       body {
         background-color: #ffffff !important;
-        color: #000000 !important;
+        color: #000000;
       }
       .no-print {
         display: none !important;
@@ -107,21 +111,71 @@
             </div>
           </div>
 
-          <!-- 擴充項目設定區 (會在表格後面顯示 4, 5...) -->
-          <div class="pt-2 border-t space-y-3">
+          <!-- 擴充項目設定區 (字型大小及顏色自訂) -->
+          <div class="pt-3 border-t space-y-4">
             <h3 class="font-bold text-slate-700 text-xs uppercase tracking-wider">表格後額外注意事項 (有內容才顯示 4, 5...)</h3>
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">行前準備與攜帶物品</label>
+            
+            <!-- 行前準備與攜帶物品 -->
+            <div class="space-y-1.5">
+              <div class="flex flex-wrap items-center justify-between gap-1">
+                <label class="block text-xs font-semibold text-slate-600">行前準備與攜帶物品</label>
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1 text-xs text-slate-500">
+                    <span>字級:</span>
+                    <select id="prepFontSize" class="px-1.5 py-0.5 border rounded border-slate-300 text-xs bg-white focus:ring-1 focus:ring-blue-500 outline-none">
+                      <option value="12px">小 (12px)</option>
+                      <option value="14px" selected>標準 (14px)</option>
+                      <option value="16px">中 (16px)</option>
+                      <option value="18px">大 (18px)</option>
+                      <option value="20px">特大 (20px)</option>
+                    </select>
+                  </div>
+                  <div class="flex items-center gap-1 text-xs text-slate-500">
+                    <span>顏色:</span>
+                    <div class="flex items-center gap-1">
+                      <input type="color" id="prepColor" value="#1e293b" title="點擊自訂顏色" class="w-5 h-5 p-0 border border-slate-300 rounded cursor-pointer bg-white">
+                      <button type="button" onclick="setQuickColor('prepColor', '#1e293b')" class="w-3.5 h-3.5 rounded-full bg-slate-800 border border-slate-300 hover:scale-110 transition" title="預設黑色"></button>
+                      <button type="button" onclick="setQuickColor('prepColor', '#2563eb')" class="w-3.5 h-3.5 rounded-full bg-blue-600 border border-slate-300 hover:scale-110 transition" title="藍色"></button>
+                      <button type="button" onclick="setQuickColor('prepColor', '#dc2626')" class="w-3.5 h-3.5 rounded-full bg-red-600 border border-slate-300 hover:scale-110 transition" title="紅色"></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <textarea id="prepItems" rows="2" placeholder="例如：&#10;☐ 出發當天穿新外套+長褲&#10;☐ 比賽用品：球拍、隊服、球褲、球鞋、擦汗毛巾、水壺。" class="w-full p-2 border rounded border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">行前注意事項</label>
+
+            <!-- 行前注意事項 -->
+            <div class="space-y-1.5">
+              <div class="flex flex-wrap items-center justify-between gap-1">
+                <label class="block text-xs font-semibold text-slate-600">行前注意事項</label>
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1 text-xs text-slate-500">
+                    <span>字級:</span>
+                    <select id="noticeFontSize" class="px-1.5 py-0.5 border rounded border-slate-300 text-xs bg-white focus:ring-1 focus:ring-blue-500 outline-none">
+                      <option value="12px">小 (12px)</option>
+                      <option value="14px" selected>標準 (14px)</option>
+                      <option value="16px">中 (16px)</option>
+                      <option value="18px">大 (18px)</option>
+                      <option value="20px">特大 (20px)</option>
+                    </select>
+                  </div>
+                  <div class="flex items-center gap-1 text-xs text-slate-500">
+                    <span>顏色:</span>
+                    <div class="flex items-center gap-1">
+                      <input type="color" id="noticeColor" value="#dc2626" title="點擊自訂顏色" class="w-5 h-5 p-0 border border-slate-300 rounded cursor-pointer bg-white">
+                      <button type="button" onclick="setQuickColor('noticeColor', '#dc2626')" class="w-3.5 h-3.5 rounded-full bg-red-600 border border-slate-300 hover:scale-110 transition" title="紅色"></button>
+                      <button type="button" onclick="setQuickColor('noticeColor', '#ea580c')" class="w-3.5 h-3.5 rounded-full bg-orange-600 border border-slate-300 hover:scale-110 transition" title="橘色"></button>
+                      <button type="button" onclick="setQuickColor('noticeColor', '#1e293b')" class="w-3.5 h-3.5 rounded-full bg-slate-800 border border-slate-300 hover:scale-110 transition" title="黑色"></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <textarea id="noticeItems" rows="2" placeholder="例如：請務必準時集合，逾時不候。" class="w-full p-2 border rounded border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
             </div>
           </div>
         </div>
 
-        <!-- 右側：資料來源 (圖片上傳 / 文本編輯) -->
+        <!-- 右側：資料來源 (圖片 / 文字) -->
         <div class="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
           <div>
             <h2 class="font-bold text-slate-700 text-base border-b pb-2 mb-3">2. 賽程資料來源 (圖片 / 文字)</h2>
@@ -137,11 +191,21 @@
             <div>
               <div class="flex items-center justify-between mb-1">
                 <label class="block text-xs font-semibold text-slate-600">或直接貼上賽程文字內容</label>
-                <button onclick="copyRawText(this)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium px-2.5 py-1 rounded transition">
-                  複製賽程文字
-                </button>
+                <div class="flex items-center gap-1.5">
+                  <button type="button" onclick="loadSampleText()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium px-2 py-1 rounded transition border border-blue-200" title="點擊帶入範例內容">
+                    載入範例 (Sample)
+                  </button>
+                  <button type="button" onclick="copyRawText(this)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium px-2 py-1 rounded transition">
+                    複製賽程文字
+                  </button>
+                  <button type="button" onclick="clearRawText()" class="bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 text-xs font-medium px-1.5 py-1 rounded transition" title="清空文字框以檢視底層提示樣式">
+                    清空
+                  </button>
+                </div>
               </div>
-              <textarea id="rawText" rows="7" class="w-full p-2 border rounded border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+              <textarea id="rawText" rows="7" 
+                placeholder="【範例格式 Sample】&#10;【2026-11-19】&#10;低年級&#10;選手A (低男單) : 12:00、14:30&#10;選手B (低男單) : 12:00、13:15" 
+                class="w-full p-2 border rounded border-slate-300 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
             </div>
           </div>
 
@@ -161,39 +225,34 @@
   <div id="outputContainer" class="max-w-4xl mx-auto space-y-8 px-4 sm:px-0"></div>
 
   <script>
-    // 預設比賽賽程文字內容
-    const defaultText = `【2026-11-19】
+    // 預設比賽賽程範例文字 (Sample)
+    const sampleText = `【2026-11-19】
 低年級
 選手A (低男單) : 12:00、14:30
-選手B (低男單) : 12:00、13:15
-選手C (低男單) : 12:15、14:30
-選手D (低男單) : 13:15、14:30
-選手E (低女單) : 15:15、15:45
+選手B (低男單) : 12:00、13:15`;
 
-中年級
-選手F (中男單) : 08:45、10:00
-選手G (中男單) : 10:00、11:15
-選手H (中女單) : 11:45、13:00
-選手I (中女單) : 12:00、13:15、14:15
+    document.getElementById('rawText').value = sampleText;
 
-高年級
-選手J (高男單) : 08:00、10:30
-選手K (高男單) : 08:00、09:15
-選手L (高男單) : 09:15、10:30
-選手M (高男單) : 09:30、10:45
+    // 載入範例文字
+    function loadSampleText() {
+      document.getElementById('rawText').value = sampleText;
+      render();
+    }
 
-【2026-11-20】
-中年級
-選手F (中男雙) : 09:00、09:30
-選手B (中男雙) : 09:00、09:30
+    // 清空賽程文字框
+    function clearRawText() {
+      document.getElementById('rawText').value = '';
+      render();
+    }
 
-高年級
-選手M (高男雙) : 08:45、09:30
-選手N (高男單/高男雙) : 08:45、09:30、11:00、13:45
-選手O (高女單) : 12:30、15:00
-選手P (高女單) : 12:30、14:15、15:00`;
-
-    document.getElementById('rawText').value = defaultText;
+    // 快速切換顏色
+    function setQuickColor(elementId, color) {
+      const el = document.getElementById(elementId);
+      if (el) {
+        el.value = color;
+        render();
+      }
+    }
 
     // 複製賽事與集合時間資訊功能
     function copyTournamentInfo(btn) {
@@ -261,9 +320,14 @@
 
       lines.forEach(line => {
         line = line.trim();
-        if (!line) return;
+        if (!line || line.startsWith('//') || line.startsWith('#')) return;
 
-        const dateMatch = line.match(/【(.*?)】/) || line.match(/(\d{4}-\d{2}-\d{2})/);
+        // 辨識日期標籤 (如：【2026-11-19】或 2026-11-19，忽略純【範例】或【Sample】標籤)
+        const dateMatch = line.match(/【.*?(\d{4}[-\/\.]\d{1,2}[-\/\.]\d{1,2}.*?)】/) || 
+                          line.match(/【(.*?\d{1,2}月\d{1,2}日.*?)】/) ||
+                          line.match(/【(.*?\d+.*?)】/) ||
+                          line.match(/(\d{4}[-\/\.]\d{1,2}[-\/\.]\d{1,2})/);
+
         if (dateMatch) {
           currentDate = dateMatch[1];
           return;
@@ -309,6 +373,17 @@
       }
     }
 
+    // 日期比對輔助函式
+    function matchDate(schedDate, inputDateStr) {
+      if (!schedDate || !inputDateStr) return false;
+      if (schedDate === inputDateStr) return true;
+      if (inputDateStr.includes(schedDate) || schedDate.includes(inputDateStr)) return true;
+      const m1 = schedDate.match(/\d{1,2}[-\/\.]\d{1,2}/);
+      const m2 = inputDateStr.match(/\d{1,2}[-\/\.]\d{1,2}/);
+      if (m1 && m2 && m1[0] === m2[0]) return true;
+      return false;
+    }
+
     // 渲染通知單與公假單列表
     function render() {
       const text = document.getElementById('rawText').value;
@@ -328,29 +403,56 @@
       const day2G = document.getElementById('day2Gather').value;
       const day2S = document.getElementById('day2Self').value;
 
-      // 取得動態擴充欄位內容
+      // 取得動態擴充欄位內容與字型大小、顏色
       const prepItems = document.getElementById('prepItems').value.trim();
       const noticeItems = document.getElementById('noticeItems').value.trim();
+      const prepFontSize = document.getElementById('prepFontSize').value;
+      const prepColor = document.getElementById('prepColor').value;
+      const noticeFontSize = document.getElementById('noticeFontSize').value;
+      const noticeColor = document.getElementById('noticeColor').value;
 
       const container = document.getElementById('outputContainer');
       container.innerHTML = '';
 
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white p-12 rounded-xl border border-dashed border-slate-300 text-center text-slate-400">
+            <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <div class="text-base font-semibold text-slate-600 mb-1">尚未輸入賽程資料</div>
+            <p class="text-sm">請於上方貼上賽程文字、上傳賽程圖片或點擊「載入範例 (Sample)」產生通知單。</p>
+          </div>
+        `;
+        return;
+      }
+
       filtered.forEach(student => {
-        const day1Schedules = student.schedules.filter(s => s.date.includes('11-19') || s.date === day1D);
-        const day2Schedules = student.schedules.filter(s => s.date.includes('11-20') || s.date === day2D);
+        const day1Schedules = student.schedules.filter(s => matchDate(s.date, day1D));
+        const day2Schedules = student.schedules.filter(s => matchDate(s.date, day2D));
 
         const card = document.createElement('div');
         card.className = 'print-page bg-white p-8 rounded-xl shadow-sm border border-slate-200 text-slate-900 font-sans leading-relaxed';
 
-        // 產生 4. 5. 後續欄位 HTML (若有內容)
+        // 產生 4. 5. 後續欄位 HTML (若有內容，套用使用者自訂的大小與顏色)
         let extraListHtml = '';
         let nextIndex = 4;
         if (prepItems) {
-          extraListHtml += `<li class="font-bold text-base mt-3" value="${nextIndex}">行前準備與攜帶物品：<div class="font-normal pl-2 whitespace-pre-line text-sm mt-1 leading-relaxed">${prepItems}</div></li>`;
+          extraListHtml += `
+            <li class="font-bold text-base mt-3" value="${nextIndex}" style="color: ${prepColor} !important;">
+              行前準備與攜帶物品：
+              <div class="font-normal pl-2 whitespace-pre-line mt-1 leading-relaxed" style="font-size: ${prepFontSize}; color: ${prepColor} !important;">
+                ${prepItems}
+              </div>
+            </li>`;
           nextIndex++;
         }
         if (noticeItems) {
-          extraListHtml += `<li class="font-bold text-base mt-3" value="${nextIndex}">注意事項：<div class="font-normal pl-2 whitespace-pre-line text-sm mt-1 leading-relaxed">${noticeItems}</div></li>`;
+          extraListHtml += `
+            <li class="font-bold text-base mt-3" value="${nextIndex}" style="color: ${noticeColor} !important;">
+              行前注意事項：
+              <div class="font-normal pl-2 whitespace-pre-line mt-1 leading-relaxed" style="font-size: ${noticeFontSize}; color: ${noticeColor} !important;">
+                ${noticeItems}
+              </div>
+            </li>`;
         }
 
         card.innerHTML = `
@@ -450,9 +552,12 @@
     }
 
     // 監聽所有設定元件變更並重新渲染
-    ['tournamentName', 'tournamentLocation', 'day1Date', 'day2Date', 'day1Gather', 'day1Self', 'day2Gather', 'day2Self', 'prepItems', 'noticeItems', 'rawText', 'studentSelect'].forEach(id => {
-      document.getElementById(id).addEventListener('input', render);
-      document.getElementById(id).addEventListener('change', render);
+    ['tournamentName', 'tournamentLocation', 'day1Date', 'day2Date', 'day1Gather', 'day1Self', 'day2Gather', 'day2Self', 'prepItems', 'noticeItems', 'prepFontSize', 'prepColor', 'noticeFontSize', 'noticeColor', 'rawText', 'studentSelect'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', render);
+        el.addEventListener('change', render);
+      }
     });
 
     // 處理圖片上傳 (OCR)
