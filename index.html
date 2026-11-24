@@ -121,7 +121,7 @@
                 <label class="block text-xs font-semibold text-slate-600">行前準備與攜帶物品</label>
                 <div class="flex items-center gap-2">
                   <div class="flex items-center gap-1 text-xs text-slate-500">
-                    <span>字級:</span>
+                    <span>內文字級:</span>
                     <select id="prepFontSize" class="px-1.5 py-0.5 border rounded border-slate-300 text-xs bg-white focus:ring-1 focus:ring-blue-500 outline-none">
                       <option value="12px">小 (12px)</option>
                       <option value="14px" selected>標準 (14px)</option>
@@ -131,7 +131,7 @@
                     </select>
                   </div>
                   <div class="flex items-center gap-1 text-xs text-slate-500">
-                    <span>顏色:</span>
+                    <span>內文顏色:</span>
                     <div class="flex items-center gap-1">
                       <input type="color" id="prepColor" value="#1e293b" title="點擊自訂顏色" class="w-5 h-5 p-0 border border-slate-300 rounded cursor-pointer bg-white">
                       <button type="button" onclick="setQuickColor('prepColor', '#1e293b')" class="w-3.5 h-3.5 rounded-full bg-slate-800 border border-slate-300 hover:scale-110 transition" title="預設黑色"></button>
@@ -150,7 +150,7 @@
                 <label class="block text-xs font-semibold text-slate-600">行前注意事項</label>
                 <div class="flex items-center gap-2">
                   <div class="flex items-center gap-1 text-xs text-slate-500">
-                    <span>字級:</span>
+                    <span>內文字級:</span>
                     <select id="noticeFontSize" class="px-1.5 py-0.5 border rounded border-slate-300 text-xs bg-white focus:ring-1 focus:ring-blue-500 outline-none">
                       <option value="12px">小 (12px)</option>
                       <option value="14px" selected>標準 (14px)</option>
@@ -160,7 +160,7 @@
                     </select>
                   </div>
                   <div class="flex items-center gap-1 text-xs text-slate-500">
-                    <span>顏色:</span>
+                    <span>內文顏色:</span>
                     <div class="flex items-center gap-1">
                       <input type="color" id="noticeColor" value="#dc2626" title="點擊自訂顏色" class="w-5 h-5 p-0 border border-slate-300 rounded cursor-pointer bg-white">
                       <button type="button" onclick="setQuickColor('noticeColor', '#dc2626')" class="w-3.5 h-3.5 rounded-full bg-red-600 border border-slate-300 hover:scale-110 transition" title="紅色"></button>
@@ -195,7 +195,7 @@
                   <button type="button" onclick="loadSampleText()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium px-2 py-1 rounded transition border border-blue-200" title="點擊帶入範例內容">
                     載入範例 (Sample)
                   </button>
-                  <button type="button" onclick="copyRawText(this)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium px-2 py-1 rounded transition">
+                  <button type="button" onclick="copyRawText(this)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium px-2.5 py-1 rounded transition">
                     複製賽程文字
                   </button>
                   <button type="button" onclick="clearRawText()" class="bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 text-xs font-medium px-1.5 py-1 rounded transition" title="清空文字框以檢視底層提示樣式">
@@ -432,13 +432,13 @@
         const card = document.createElement('div');
         card.className = 'print-page bg-white p-8 rounded-xl shadow-sm border border-slate-200 text-slate-900 font-sans leading-relaxed';
 
-        // 產生 4. 5. 後續欄位 HTML (若有內容，套用使用者自訂的大小與顏色)
+        // 產生 4. 5. 後續欄位 HTML (標題維持黑色且字級與 1.2.3. 一致，僅內文調整大小與顏色)
         let extraListHtml = '';
         let nextIndex = 4;
         if (prepItems) {
           extraListHtml += `
-            <li class="font-bold text-base mt-3" value="${nextIndex}" style="color: ${prepColor} !important;">
-              行前準備與攜帶物品：
+            <li class="font-bold text-base mt-3 text-slate-900" value="${nextIndex}">
+              <span>行前準備與攜帶物品：</span>
               <div class="font-normal pl-2 whitespace-pre-line mt-1 leading-relaxed" style="font-size: ${prepFontSize}; color: ${prepColor} !important;">
                 ${prepItems}
               </div>
@@ -447,8 +447,8 @@
         }
         if (noticeItems) {
           extraListHtml += `
-            <li class="font-bold text-base mt-3" value="${nextIndex}" style="color: ${noticeColor} !important;">
-              行前注意事項：
+            <li class="font-bold text-base mt-3 text-slate-900" value="${nextIndex}">
+              <span>行前注意事項：</span>
               <div class="font-normal pl-2 whitespace-pre-line mt-1 leading-relaxed" style="font-size: ${noticeFontSize}; color: ${noticeColor} !important;">
                 ${noticeItems}
               </div>
@@ -513,7 +513,7 @@
           </table>
 
           <!-- 續接 4, 5 條目 (表格下方) -->
-          ${extraListHtml ? `<ol class="list-decimal list-inside mb-6">${extraListHtml}</ol>` : '<div class="mb-6"></div>'}
+          ${extraListHtml ? `<ol class="list-decimal list-inside font-bold text-base text-slate-900 mb-6">${extraListHtml}</ol>` : '<div class="mb-6"></div>'}
 
           <!-- 撕下聯提示與虛線 -->
           <div class="text-center font-medium text-sm text-slate-700 mb-2">
