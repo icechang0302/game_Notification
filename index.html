@@ -78,37 +78,18 @@
             <input type="text" id="tournamentLocation" value="桃園市立羽球館" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">首日日期 (Day 1)</label>
-              <input type="text" id="day1Date" value="2026-11-19 (四)" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+          <!-- 比賽日期與集合時間列表 (1 ~ 10 日動態新增) -->
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-600">比賽日期與集合時間</span>
+              <div class="flex items-center gap-2">
+                <span id="daysCountLabel" class="text-xs text-slate-500">已設定 2 / 10 日</span>
+                <button type="button" id="addDayBtn" onclick="addDay()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded border border-blue-200 transition flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span>+ 多加日期</span>
+                </button>
+              </div>
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">次日日期 (Day 2)</label>
-              <input type="text" id="day2Date" value="2026-11-20 (五)" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Day 1 學校集合</label>
-              <input type="text" id="day1Gather" value="07:30" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Day 1 自行前往</label>
-              <input type="text" id="day1Self" value="08:00" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Day 2 學校集合</label>
-              <input type="text" id="day2Gather" value="07:30" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Day 2 自行前往</label>
-              <input type="text" id="day2Self" value="08:00" class="w-full px-3 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-            </div>
+            <div id="daysContainer" class="space-y-2.5"></div>
           </div>
 
           <!-- 擴充項目設定區 (字型大小及顏色自訂) -->
@@ -254,23 +235,151 @@
       }
     }
 
+    const MAX_DAYS = 10;
+    const WEEKDAYS_ZH = ['日', '一', '二', '三', '四', '五', '六'];
+
+    // 動態日期與集合時間資料 (預設 2 日，最多 10 日)
+    const daysData = [
+      { date: '2026-11-19 (四)', gather: '07:30', self: '08:00' },
+      { date: '2026-11-20 (五)', gather: '07:30', self: '08:00' }
+    ];
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getDayDateLabel(index) {
+      const dayNum = index + 1;
+      if (dayNum === 1) return '首日日期 (Day 1)';
+      if (dayNum === 2) return '次日日期 (Day 2)';
+      return `第 ${dayNum} 日日期 (Day ${dayNum})`;
+    }
+
+    // 依前一日日期推算下一日預設日期 (格式如 YYYY-MM-DD (週))
+    function getNextDateSuggestion(prevDateStr) {
+      if (!prevDateStr) return '';
+      const m = prevDateStr.match(/(\d{4})([-\/\.])(\d{1,2})\2(\d{1,2})/);
+      if (!m) return '';
+      const year = Number(m[1]);
+      const sep = m[2];
+      const month = Number(m[3]);
+      const day = Number(m[4]);
+      const next = new Date(year, month - 1, day + 1);
+      if (Number.isNaN(next.getTime())) return '';
+      const yyyy = next.getFullYear();
+      const mm = String(next.getMonth() + 1).padStart(2, '0');
+      const dd = String(next.getDate()).padStart(2, '0');
+      const wk = WEEKDAYS_ZH[next.getDay()];
+      return `${yyyy}${sep}${mm}${sep}${dd} (${wk})`;
+    }
+
+    // 渲染左側動態日期設定欄位
+    function renderDayInputs() {
+      const container = document.getElementById('daysContainer');
+      const countLabel = document.getElementById('daysCountLabel');
+      const addBtn = document.getElementById('addDayBtn');
+      if (!container) return;
+
+      container.innerHTML = '';
+      daysData.forEach((day, index) => {
+        const dayNum = index + 1;
+        const card = document.createElement('div');
+        card.className = 'bg-white p-2.5 rounded-lg border border-slate-200 space-y-2';
+
+        const removeBtnHtml = daysData.length > 1
+          ? `<button type="button" onclick="removeDay(${index})" class="text-xs text-slate-400 hover:text-red-600 transition px-1" title="移除 Day ${dayNum}">移除</button>`
+          : '';
+
+        card.innerHTML = `
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end">
+            <div class="sm:col-span-5">
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-semibold text-slate-600">${getDayDateLabel(index)}</label>
+                <span class="sm:hidden">${removeBtnHtml}</span>
+              </div>
+              <input type="text" data-day-index="${index}" data-field="date" value="${escapeHtml(day.date)}" placeholder="例如：2026-11-21 (六)" class="w-full px-2.5 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Day ${dayNum} 學校集合</label>
+              <input type="text" data-day-index="${index}" data-field="gather" value="${escapeHtml(day.gather)}" placeholder="07:30" class="w-full px-2.5 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Day ${dayNum} 自行前往</label>
+              <input type="text" data-day-index="${index}" data-field="self" value="${escapeHtml(day.self)}" placeholder="08:00" class="w-full px-2.5 py-1.5 border rounded border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div class="hidden sm:flex sm:col-span-1 justify-end pb-1.5">
+              ${removeBtnHtml}
+            </div>
+          </div>
+        `;
+
+        card.querySelectorAll('input[data-day-index]').forEach(input => {
+          const handleEdit = (e) => {
+            const idx = Number(e.target.dataset.dayIndex);
+            const field = e.target.dataset.field;
+            if (daysData[idx]) {
+              daysData[idx][field] = e.target.value;
+              render();
+            }
+          };
+          input.addEventListener('input', handleEdit);
+          input.addEventListener('change', handleEdit);
+        });
+
+        container.appendChild(card);
+      });
+
+      if (countLabel) {
+        countLabel.textContent = daysData.length >= MAX_DAYS
+          ? `已達上限 ${MAX_DAYS} 日`
+          : `已設定 ${daysData.length} / ${MAX_DAYS} 日`;
+      }
+      if (addBtn) {
+        addBtn.disabled = daysData.length >= MAX_DAYS;
+      }
+    }
+
+    // 多加日期 (最多十日)
+    function addDay() {
+      if (daysData.length >= MAX_DAYS) return;
+      const prev = daysData[daysData.length - 1];
+      daysData.push({
+        date: getNextDateSuggestion(prev ? prev.date : ''),
+        gather: prev ? prev.gather : '07:30',
+        self: prev ? prev.self : '08:00'
+      });
+      renderDayInputs();
+      render();
+    }
+
+    // 移除指定日期 (至少保留一日)
+    function removeDay(index) {
+      if (daysData.length <= 1) return;
+      daysData.splice(index, 1);
+      renderDayInputs();
+      render();
+    }
+
     // 複製賽事與集合時間資訊功能
     function copyTournamentInfo(btn) {
       const tName = document.getElementById('tournamentName').value;
       const tLoc = document.getElementById('tournamentLocation').value;
-      const d1Date = document.getElementById('day1Date').value;
-      const d2Date = document.getElementById('day2Date').value;
-      const d1Gather = document.getElementById('day1Gather').value;
-      const d1Self = document.getElementById('day1Self').value;
-      const d2Gather = document.getElementById('day2Gather').value;
-      const d2Self = document.getElementById('day2Self').value;
       const prep = document.getElementById('prepItems').value;
       const notice = document.getElementById('noticeItems').value;
 
       let infoText = `比賽名稱：${tName}\n比賽地點：${tLoc}\n`;
       infoText += `----------------------------------\n`;
-      infoText += `【${d1Date}】\n- 學校集合：${d1Gather}\n- 自行前往：${d1Self}\n\n`;
-      infoText += `【${d2Date}】\n- 學校集合：${d2Gather}\n- 自行前往：${d2Self}`;
+      daysData.forEach((day, idx) => {
+        infoText += `【${day.date || `Day ${idx + 1}`}】\n- 學校集合：${day.gather}\n- 自行前往：${day.self}`;
+        if (idx < daysData.length - 1) {
+          infoText += `\n\n`;
+        }
+      });
       
       if (prep.trim()) {
         infoText += `\n\n【行前準備與攜帶物品】\n${prep}`;
@@ -373,15 +482,92 @@
       }
     }
 
+    // 解析日期字串中的年月日數值，避免跨日誤判
+    function extractDateParts(str) {
+      if (!str) return null;
+      let m = str.match(/(\d{4})[-\/\.](\d{1,2})[-\/\.](\d{1,2})/);
+      if (m) {
+        return { year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) };
+      }
+      m = str.match(/(?:(\d{4})年\s*)?(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
+      if (m) {
+        return { year: m[1] ? Number(m[1]) : null, month: Number(m[2]), day: Number(m[3]) };
+      }
+      m = str.match(/(?:^|[^\d])(\d{1,2})[-\/\.](\d{1,2})(?!\d)/);
+      if (m) {
+        return { year: null, month: Number(m[1]), day: Number(m[2]) };
+      }
+      return null;
+    }
+
     // 日期比對輔助函式
     function matchDate(schedDate, inputDateStr) {
       if (!schedDate || !inputDateStr) return false;
-      if (schedDate === inputDateStr) return true;
-      if (inputDateStr.includes(schedDate) || schedDate.includes(inputDateStr)) return true;
-      const m1 = schedDate.match(/\d{1,2}[-\/\.]\d{1,2}/);
-      const m2 = inputDateStr.match(/\d{1,2}[-\/\.]\d{1,2}/);
-      if (m1 && m2 && m1[0] === m2[0]) return true;
-      return false;
+      const sTrim = schedDate.trim();
+      const iTrim = inputDateStr.trim();
+      if (sTrim === iTrim) return true;
+
+      const p1 = extractDateParts(sTrim);
+      const p2 = extractDateParts(iTrim);
+      if (p1 && p2) {
+        if (p1.year && p2.year && p1.year !== p2.year) return false;
+        return p1.month === p2.month && p1.day === p2.day;
+      }
+      return iTrim.includes(sTrim) || sTrim.includes(iTrim);
+    }
+
+    function renderDayHeaderContent(day) {
+      return `
+        <div class="font-bold">日期: ${escapeHtml(day.date)}</div>
+        <div class="font-normal text-xs sm:text-sm mt-1">學校集合：${escapeHtml(day.gather)} | 自行前往：${escapeHtml(day.self)}</div>
+      `;
+    }
+
+    function renderDaySchedulesHtml(schedules) {
+      if (schedules.length === 0) {
+        return '<div class="text-gray-400 text-center py-4">今日無賽程安排</div>';
+      }
+      return schedules.map(s => `
+        <div class="mb-3 last:mb-0">
+          <div class="font-bold text-slate-800">[${escapeHtml(s.category)}]</div>
+          <div class="text-sm pl-2">賽程時間：${escapeHtml(s.times.join('、'))}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderScheduleTableRows(student) {
+      let rowsHtml = '';
+      for (let i = 0; i < daysData.length; i += 2) {
+        const dayA = daysData[i];
+        const dayB = daysData[i + 1];
+        const isLastPair = i + 2 >= daysData.length;
+        const bottomBorderClass = isLastPair ? '' : 'border-b border-black';
+        const schedA = student.schedules.filter(s => matchDate(s.date, dayA.date));
+
+        if (dayB) {
+          const schedB = student.schedules.filter(s => matchDate(s.date, dayB.date));
+          rowsHtml += `
+            <tr class="border-b border-black">
+              <th class="w-1/2 border-r border-black p-2 bg-slate-50">${renderDayHeaderContent(dayA)}</th>
+              <th class="w-1/2 p-2 bg-slate-50">${renderDayHeaderContent(dayB)}</th>
+            </tr>
+            <tr>
+              <td class="border-r border-black p-3 sm:p-4 text-left align-top ${bottomBorderClass}">${renderDaySchedulesHtml(schedA)}</td>
+              <td class="p-3 sm:p-4 text-left align-top ${bottomBorderClass}">${renderDaySchedulesHtml(schedB)}</td>
+            </tr>
+          `;
+        } else {
+          rowsHtml += `
+            <tr class="border-b border-black">
+              <th colspan="2" class="w-full p-2 bg-slate-50">${renderDayHeaderContent(dayA)}</th>
+            </tr>
+            <tr>
+              <td colspan="2" class="p-3 sm:p-4 text-left align-top ${bottomBorderClass}">${renderDaySchedulesHtml(schedA)}</td>
+            </tr>
+          `;
+        }
+      }
+      return rowsHtml;
     }
 
     // 渲染通知單與公假單列表
@@ -395,13 +581,14 @@
 
       const tName = document.getElementById('tournamentName').value || '填比賽名稱';
       const tLoc = document.getElementById('tournamentLocation').value || '填比賽地點';
-      const day1D = document.getElementById('day1Date').value;
-      const day2D = document.getElementById('day2Date').value;
 
-      const day1G = document.getElementById('day1Gather').value;
-      const day1S = document.getElementById('day1Self').value;
-      const day2G = document.getElementById('day2Gather').value;
-      const day2S = document.getElementById('day2Self').value;
+      const activeDates = daysData.map(d => d.date.trim()).filter(Boolean);
+      let dateRangeText = '未設定日期';
+      if (activeDates.length === 1) {
+        dateRangeText = activeDates[0];
+      } else if (activeDates.length >= 2) {
+        dateRangeText = `${activeDates[0]} ~ ${activeDates[activeDates.length - 1]}`;
+      }
 
       // 取得動態擴充欄位內容與字型大小、顏色
       const prepItems = document.getElementById('prepItems').value.trim();
@@ -426,9 +613,6 @@
       }
 
       filtered.forEach(student => {
-        const day1Schedules = student.schedules.filter(s => matchDate(s.date, day1D));
-        const day2Schedules = student.schedules.filter(s => matchDate(s.date, day2D));
-
         const card = document.createElement('div');
         card.className = 'print-page bg-white p-8 rounded-xl shadow-sm border border-slate-200 text-slate-900 font-sans leading-relaxed';
 
@@ -438,71 +622,40 @@
         if (prepItems) {
           extraListHtml += `<li class="font-bold text-base mt-2.5 text-slate-900" value="${nextIndex}">` +
             `<span>行前準備與攜帶物品：</span>` +
-            `<div class="font-normal pl-4 whitespace-pre-line leading-relaxed" style="font-size: ${prepFontSize}; color: ${prepColor} !important;">${prepItems}</div>` +
+            `<div class="font-normal pl-4 whitespace-pre-line leading-relaxed" style="font-size: ${prepFontSize}; color: ${prepColor} !important;">${escapeHtml(prepItems)}</div>` +
             `</li>`;
           nextIndex++;
         }
         if (noticeItems) {
           extraListHtml += `<li class="font-bold text-base mt-2.5 text-slate-900" value="${nextIndex}">` +
             `<span>行前注意事項：</span>` +
-            `<div class="font-normal pl-4 whitespace-pre-line leading-relaxed" style="font-size: ${noticeFontSize}; color: ${noticeColor} !important;">${noticeItems}</div>` +
+            `<div class="font-normal pl-4 whitespace-pre-line leading-relaxed" style="font-size: ${noticeFontSize}; color: ${noticeColor} !important;">${escapeHtml(noticeItems)}</div>` +
             `</li>`;
         }
 
         card.innerHTML = `
           <!-- 標題 -->
           <div class="text-center font-bold text-2xl tracking-wide mb-6">
-            「 ${tName} 」 行前通知單
+            「 ${escapeHtml(tName)} 」 行前通知單
           </div>
 
           <!-- 親愛的家長內文與注意事項 -->
           <div class="text-base font-medium space-y-2 mb-3">
             <p>親愛的家長您好：</p>
-            <p>孩子們將代表學校參加「 <span class="font-bold border-b border-black px-1">${tName}</span> 」，在此通知注意事項：</p>
+            <p>孩子們將代表學校參加「 <span class="font-bold border-b border-black px-1">${escapeHtml(tName)}</span> 」，在此通知注意事項：</p>
           </div>
 
           <!-- 條目 1, 2, 3 -->
           <ol class="list-decimal list-inside font-bold text-base space-y-1 mb-3">
-            <li>比賽日期：<span class="font-normal">${day1D} ~ ${day2D}</span></li>
-            <li>比賽地點：<span class="font-normal">${tLoc}</span></li>
+            <li>比賽日期：<span class="font-normal">${escapeHtml(dateRangeText)}</span></li>
+            <li>比賽地點：<span class="font-normal">${escapeHtml(tLoc)}</span></li>
             <li>集合時間：</li>
           </ol>
 
-          <!-- 兩日時間對照表格 (緊接在 3. 集合時間 下方) -->
+          <!-- 多日時間對照表格 (緊接在 3. 集合時間 下方) -->
           <table class="w-full border-collapse border border-black text-center mb-4 text-sm sm:text-base">
-            <thead>
-              <tr class="border-b border-black">
-                <th class="w-1/2 border-r border-black p-2 bg-slate-50">
-                  <div class="font-bold">日期: ${day1D}</div>
-                  <div class="font-normal text-xs sm:text-sm mt-1">學校集合：${day1G} | 自行前往：${day1S}</div>
-                </th>
-                <th class="w-1/2 p-2 bg-slate-50">
-                  <div class="font-bold">日期: ${day2D}</div>
-                  <div class="font-normal text-xs sm:text-sm mt-1">學校集合：${day2G} | 自行前往：${day2S}</div>
-                </th>
-              </tr>
-            </thead>
             <tbody>
-              <tr>
-                <!-- Day 1 賽程詳情 -->
-                <td class="border-r border-black p-4 text-left align-top min-h-[120px]">
-                  ${day1Schedules.length > 0 ? day1Schedules.map(s => `
-                    <div class="mb-3">
-                      <div class="font-bold text-slate-800">[${s.category}]</div>
-                      <div class="text-sm pl-2">賽程時間：${s.times.join('、')}</div>
-                    </div>
-                  `).join('') : '<div class="text-gray-400 text-center py-4">今日無賽程安排</div>'}
-                </td>
-                <!-- Day 2 賽程詳情 -->
-                <td class="p-4 text-left align-top min-h-[120px]">
-                  ${day2Schedules.length > 0 ? day2Schedules.map(s => `
-                    <div class="mb-3">
-                      <div class="font-bold text-slate-800">[${s.category}]</div>
-                      <div class="text-sm pl-2">賽程時間：${s.times.join('、')}</div>
-                    </div>
-                  `).join('') : '<div class="text-gray-400 text-center py-4">今日無賽程安排</div>'}
-                </td>
-              </tr>
+              ${renderScheduleTableRows(student)}
             </tbody>
           </table>
 
@@ -518,8 +671,8 @@
           <!-- 公假單回條區塊 -->
           <div class="pt-2 text-base">
             <div class="font-bold mb-3 flex items-center">
-              <span class="border-b-2 border-black text-lg px-2 mr-1">${student.name}</span> 
-              因代表學校參加「 ${tName} 」，需請公假外出參賽
+              <span class="border-b-2 border-black text-lg px-2 mr-1">${escapeHtml(student.name)}</span> 
+              因代表學校參加「 ${escapeHtml(tName)} 」，需請公假外出參賽
             </div>
             <div class="font-semibold mb-2">時間如下：</div>
 
@@ -527,7 +680,7 @@
               ${student.schedules.map(s => `
                 <div class="flex items-start gap-2">
                   <input type="checkbox" checked class="mt-1 h-4 w-4 rounded border-gray-400">
-                  <span>${s.date} ${s.category} (${s.times.join('、')})</span>
+                  <span>${escapeHtml(s.date)} ${escapeHtml(s.category)} (${escapeHtml(s.times.join('、'))})</span>
                 </div>
               `).join('')}
             </div>
@@ -545,8 +698,8 @@
       });
     }
 
-    // 監聽所有設定元件變更並重新渲染
-    ['tournamentName', 'tournamentLocation', 'day1Date', 'day2Date', 'day1Gather', 'day1Self', 'day2Gather', 'day2Self', 'prepItems', 'noticeItems', 'prepFontSize', 'prepColor', 'noticeFontSize', 'noticeColor', 'rawText', 'studentSelect'].forEach(id => {
+    // 監聽固定設定元件變更並重新渲染
+    ['tournamentName', 'tournamentLocation', 'prepItems', 'noticeItems', 'prepFontSize', 'prepColor', 'noticeFontSize', 'noticeColor', 'rawText', 'studentSelect'].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
         el.addEventListener('input', render);
@@ -579,7 +732,8 @@
       }
     });
 
-    // 初始化首次渲染
+    // 初始化日期設定欄位與首次渲染
+    renderDayInputs();
     render();
   </script>
 </body>
